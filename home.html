@@ -19,10 +19,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   <meta charset="utf-8">
   <title>Jolokia Web Console Beta</title>
 
-  <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+  <link rel="stylesheet" type="text/css" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
   <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/jstree/3.0.8/themes/default/style.min.css">
 
-  <!-- custom css link -->
+  <link rel="stylesheet" type="text/css" href="app.css">
 
   <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/angularjs/1.3.2/angular.min.js"></script>
   <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/angularjs/1.3.2/angular-route.min.js"></script>
@@ -35,15 +35,27 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 </head>
 <body class="container" ng-app="jolokiaWebConsole">
   <h1>Jolokia Web Console Beta</h1>
+
+  <hr>
+
+  <form class="simple-form" role="form">
+    <div class="form-group">
+      <label>
+        IP Address/Hostname: <input type="text" class="form-control" placeholder="192.168.0.123" ng-model="hostname" />
+      </label>
+      <button type="button" class="btn btn-primary" ng-click="setServer()">Connect</button>
+    </div>
+  </form>
+
   <hr>
 
   <div ng-controller="HomeCtrl">
     <div class="row">
-      <div class="col-md-4 tree-browser">
-        <js-tree tree-plugins="sort,types" tree-types="treeTypesConfig" tree-data="scope" tree-model="sampleData"></js-tree>
+      <div class="col-md-4">
+        <js-tree tree-plugins="sort,types" tree-types="treeTypesConfig" tree-data="scope" tree-model="treeData"></js-tree>
       </div>
-      <div class="col-md-8 file-viewer">
-        <pre><code>This is some placeholder text</code></pre>
+      <div class="col-md-8">
+        <pre ng-hide="!nodeDetails"><code>{{nodeDetails}}</code></pre>
       </div>
     </div>
   </div>

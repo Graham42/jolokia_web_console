@@ -19,22 +19,22 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
   window.app = angular.module('jolokiaWebConsole', ['jsTree.directive']);
 
-  window.app.factory('JolokiaClient',
+  app.factory('JolokiaClient',
   	['$http',
     function ($http) {
       var _client = {},
           _baseUrl;
 
-      _client.setServer = function(server, port){
-        port = port || '8080';
+      _client.setServer = function(server){
         server = server || 'localhost';
 
-        var url = [server, ':', port, '/jolokia'];
-        $http.get(url).then(
+        var url = [server, ':', '8080', '/jolokia'];
+        var promise = $http.get(url).then(
           function (){
             _baseUrl = url;
           }
         );
+        return promise;
       };
 
       _client.list = function(path) {
@@ -51,9 +51,22 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     }]
   );
 
-  window.app.controller('HomeCtrl',
+  app.controller('HomeCtrl',
     ['$scope', 'JolokiaClient',
     function ($scope, JolokiaClient) {
+
+      function initRootTree(){
+        JolokiaClient.list('').then(
+          function (response){
+            //TODO need to process response
+            // response.data.value is the root list
+            // $scope.treeData = response.data.value;
+          },
+          function (){
+            // failed...
+          }
+        );
+      }
 
       $scope.treeTypesConfig = {
         "default": {
@@ -66,29 +79,26 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
           "icon": "/images/file.png"
         }
       };
-      $scope.sampleData = [{
-        "id": "ajson1",
-        "parent": "#",
-        "text": "Simple root node"
-      }, {
-        "id": "ajson2",
-        "parent": "#",
-        "type": "folder",
-        "text": "Root node 2"
-      }, {
-        "id": "ajson3",
-        "parent": "ajson2",
-        "text": "Child 1"
-      }, {
-        "id": "ajson4",
-        "parent": "ajson2",
-        "text": "Child 2"
-      }];
+
+      $scope.treeData = [];
 
       // directive doesn't pick up initial data without this
       setTimeout( function(){
         $scope.$apply();
       }, 0);
+
+      $scope.setServer = function () {
+        // show loading symbol
+        JolokiaClient.setServer($scope.hostname).then(
+          function (response) {
+            initRootTree();
+          },
+          function () {
+            // failed...
+          }
+        );
+
+      };
     }
     ]);
 }());
