@@ -34,22 +34,24 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   <script type="text/javascript" src="app.js"></script>
 </head>
 <body class="container" ng-app="jolokiaWebConsole">
-  <h1>Jolokia Web Console Beta</h1>
-
-  <hr>
-
-  <form class="simple-form" role="form">
-    <div class="form-group">
-      <label>
-        IP Address/Hostname: <input type="text" class="form-control" placeholder="192.168.0.123" ng-model="hostname" />
-      </label>
-      <button type="button" class="btn btn-primary" ng-click="setServer()">Connect</button>
-    </div>
-  </form>
-
-  <hr>
-
   <div ng-controller="HomeCtrl">
+    <h1>Jolokia Web Console Beta</h1>
+
+    <hr>
+    <div ng-hide="!alertMessage" class="alert" ng-class="alertLevel" role="alert">
+      {{alertMessage}}
+    </div>
+    <form class="simple-form" role="form">
+      <div class="form-group">
+        <label>
+          IP Address/Hostname: <input type="text" class="form-control" placeholder="192.168.0.123" ng-model="hostname" />
+        </label>
+        <button type="button" class="btn btn-primary" ng-click="setServer()">Connect</button>
+      </div>
+    </form>
+
+    <hr>
+
     <div class="row">
       <div class="col-md-4">
         <js-tree tree-plugins="sort,types" tree-types="treeTypesConfig" tree-data="scope" tree-model="treeData"></js-tree>

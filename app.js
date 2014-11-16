@@ -28,8 +28,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
       _client.setServer = function(server){
         server = server || 'localhost';
 
-        var url = [server, ':', '8080', '/jolokia'];
-        var promise = $http.get(url).then(
+        var url = ['http://', server, ':', '8080', '/jolokia'].join('');
+        var promise = $http.get(url, {timeout: 5000}).then(
           function (){
             _baseUrl = url;
           }
@@ -68,6 +68,23 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         );
       }
 
+      function alert(message, severity){
+        $scope.alertMessage = message;
+        switch(severity) {
+            case 'CRITICAL':
+                $scope.alertLevel = 'alert-danger';
+                break;
+            case 'WARNING':
+                $scope.alertLevel = 'alert-warning';
+                break;
+            case 'SUCCESS':
+                $scope.alertLevel = 'alert-success';
+                break;
+            default:
+                $scope.alertLevel = 'alert-info';
+        }
+      }
+
       $scope.treeTypesConfig = {
         "default": {
           "icon": "/images/file.png"
@@ -88,16 +105,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
       }, 0);
 
       $scope.setServer = function () {
-        // show loading symbol
-        JolokiaClient.setServer($scope.hostname).then(
-          function (response) {
-            initRootTree();
-          },
-          function () {
-            // failed...
-          }
-        );
-
+        if (!$scope.hostname) {
+          alert('Please enter a hostname or ip address to connect to.', 'WARNING');
+        } else {
+          // show loading symbol
+          JolokiaClient.setServer($scope.hostname).then(
+            function (response) {
+              initRootTree();
+            },
+            function () {
+              alert('Could not connect to "' + $scope.hostname + '".', 'CRITICAL');
+            }
+          );
+        }
       };
     }
     ]);
