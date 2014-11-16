@@ -63,7 +63,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             // $scope.treeData = response.data.value;
           },
           function (){
-            // failed...
+            alert('Failed to get server data, please try again.', 'CRITICAL');
           }
         );
       }
@@ -108,7 +108,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         if (!$scope.hostname) {
           alert('Please enter a hostname or ip address to connect to.', 'WARNING');
         } else {
-          // show loading symbol
+          $('#loadingProgress').modal();
           JolokiaClient.setServer($scope.hostname).then(
             function (response) {
               initRootTree();
@@ -116,7 +116,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             function () {
               alert('Could not connect to "' + $scope.hostname + '".', 'CRITICAL');
             }
-          );
+          ).finally(function () {
+            $('#loadingProgress').modal('hide');
+          });
         }
       };
     }
