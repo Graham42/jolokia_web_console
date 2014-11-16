@@ -47,7 +47,7 @@
             // $scope.treeData = response.data.value;
           },
           function (){
-            // failed...
+            alert('Failed to get server data, please try again.', 'CRITICAL');
           }
         );
       }
@@ -92,7 +92,7 @@
         if (!$scope.hostname) {
           alert('Please enter a hostname or ip address to connect to.', 'WARNING');
         } else {
-          // show loading symbol
+          $('#loadingProgress').modal();
           JolokiaClient.setServer($scope.hostname).then(
             function (response) {
               initRootTree();
@@ -100,7 +100,9 @@
             function () {
               alert('Could not connect to "' + $scope.hostname + '".', 'CRITICAL');
             }
-          );
+          ).finally(function () {
+            $('#loadingProgress').modal('hide');
+          });
         }
       };
     }
