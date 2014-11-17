@@ -9,6 +9,7 @@
       var _client = {},
           j4p;
 
+
       _client.list = function(path) {
         if (!j4p) throw "Server not set";
         var _p = $q.defer();
@@ -28,6 +29,12 @@
         );
         return _p.promise;
       };
+
+
+      _client.getAttribute = function (mbean, attribute, path) {
+        return j4p.getAttribute(mbean, attribute, path);
+      };
+
 
       _client.setServer = function(server){
         server = server || 'localhost';
@@ -96,6 +103,25 @@
         $scope.$apply();
       }, 0);
 
+      $scope.nodeDetails = {
+        desc: 'Please select a leaf node to view its details.'
+      };
+
+      $scope.nodeSelected = function(e, data) {
+        //http://jimhoskins.com/2012/12/17/angularjs-and-apply.html//
+        $scope.$apply(function() {
+          var original = data.node.original;
+          if (original.isLeaf) {
+            $scope.nodeDetails.attrs = JolokiaClient.getAttribute(original.parentName + ':' + original.text);
+            $scope.nodeDetails.desc = original.details.desc;
+          } else {
+            $scope.nodeDetails = {
+              desc: 'Please select a leaf node to view its details.'
+            };
+          }
+        });
+      };
+
       $scope.setServer = function () {
         $scope.alertMessage = '';
 
@@ -111,21 +137,26 @@
 
                   // process root tree
                   var idCounter = 0;
-                  function listNode(name, node, parentId){
+                  function listNode(name, node, parentId, parentName){
                     parentId = parentId || '#';
                     var resultList = [];
                     //self
                     var id = 'node' + idCounter++;
-                    resultList.push({
+                    var isLeaf = node.hasOwnProperty('desc');
+                    var localNode = {
                       id: id,
-                      type: (node.hasOwnProperty('desc')) ? 'file' : 'folder',
+                      type: (isLeaf) ? 'file' : 'folder',
                       parent: parentId,
-                      text: name
-                    });
-                    if (!node.hasOwnProperty('desc')){
+                      parentName: parentName,
+                      text: name,
+                      isLeaf: isLeaf
+                    };
+                    if (isLeaf) localNode.details = node;
+                    resultList.push(localNode);
+                    if (!isLeaf){
                       //children
                       Object.keys(node).forEach(function (key) {
-                        resultList = resultList.concat(listNode(key, node[key], id));
+                        resultList = resultList.concat(listNode(key, node[key], id, name));
                       });
                     }
                     return resultList;
