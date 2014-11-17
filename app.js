@@ -20,31 +20,52 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   window.app = angular.module('jolokiaWebConsole', ['jsTree.directive']);
 
   app.factory('JolokiaClient',
-  	['$http',
-    function ($http) {
+  	['$q',
+    function ($q) {
       var _client = {},
-          _baseUrl;
+          j4p;
+
+      _client.list = function(path) {
+        if (!j4p) throw "Server not set";
+        var _p = $q.defer();
+        j4p.list(
+          path,
+          {
+            success: function(response) {
+              _p.resolve(response);
+            },
+            error: function(response) {
+              _p.reject(response);
+            },
+            ajaxError: function(response) {
+              _p.reject(response);
+            }
+          }
+        );
+        return _p.promise;
+      };
 
       _client.setServer = function(server){
         server = server || 'localhost';
 
         var url = ['http://', server, ':', '8080', '/jolokia'].join('');
-        var promise = $http.get(url, {timeout: 5000}).then(
-          function (){
-            _baseUrl = url;
+        j4p = new Jolokia(url);
+        var _p = $q.defer();
+        j4p.version(
+          {
+            timeout: 3000,
+            success: function(response) {
+              _p.resolve(response);
+            },
+            error: function(response) {
+              _p.reject(response);
+            },
+            ajaxError: function(response) {
+              _p.reject(response);
+            }
           }
         );
-        return promise;
-      };
-
-      _client.list = function(path) {
-        if (!_baseUrl) throw "Host not set";
-        return $http.get(_baseUrl + '/list/' + encodeURIComponent(path));
-      };
-
-      _client.read = function(path) {
-        if (!_baseUrl) throw "Host not set";
-        return $http.get(_baseUrl + '/read/' + encodeURIComponent(path));
+        return _p.promise;
       };
 
       return _client;
@@ -52,21 +73,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   );
 
   app.controller('HomeCtrl',
-    ['$scope', 'JolokiaClient',
-    function ($scope, JolokiaClient) {
-
-      function initRootTree(){
-        JolokiaClient.list('').then(
-          function (response){
-            //TODO need to process response
-            // response.data.value is the root list
-            // $scope.treeData = response.data.value;
-          },
-          function (){
-            alert('Failed to get server data, please try again.', 'CRITICAL');
-          }
-        );
-      }
+    ['$scope', '$q', 'JolokiaClient',
+    function ($scope, $q, JolokiaClient) {
 
       function alert(message, severity){
         $scope.alertMessage = message;
@@ -105,13 +113,25 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
       }, 0);
 
       $scope.setServer = function () {
+        $scope.alertMessage = '';
+
         if (!$scope.hostname) {
           alert('Please enter a hostname or ip address to connect to.', 'WARNING');
         } else {
           $('#loadingProgress').modal();
+
           JolokiaClient.setServer($scope.hostname).then(
-            function (response) {
-              initRootTree();
+            function () {
+              return JolokiaClient.list('').then(
+                function (response){
+            //       //TODO need to process response
+            //       // response.data.value is the root list
+            //       // $scope.treeData = response.data.value;
+                },
+                function (){
+                  alert('Failed to get server data, please try again.', 'CRITICAL');
+                }
+              );
             },
             function () {
               alert('Could not connect to "' + $scope.hostname + '".', 'CRITICAL');
