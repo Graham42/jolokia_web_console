@@ -108,9 +108,33 @@
             function () {
               return JolokiaClient.list('').then(
                 function (response){
-            //       //TODO need to process response
-            //       // response.data.value is the root list
-            //       // $scope.treeData = response.data.value;
+
+                  // process root tree
+                  var idCounter = 0;
+                  function listNode(name, node, parentId){
+                    parentId = parentId || '#';
+                    var resultList = [];
+                    //self
+                    var id = 'node' + idCounter++;
+                    resultList.push({
+                      id: id,
+                      type: (node.hasOwnProperty('desc')) ? 'file' : 'folder',
+                      parent: parentId,
+                      text: name
+                    });
+                    if (!node.hasOwnProperty('desc')){
+                      //children
+                      Object.keys(node).forEach(function (key) {
+                        resultList = resultList.concat(listNode(key, node[key], id));
+                      });
+                    }
+                    return resultList;
+                  }
+
+                  $scope.treeData = [];
+                  Object.keys(response).forEach(function (key) {
+                    $scope.treeData = $scope.treeData.concat(listNode(key, response[key]));
+                  });
                 },
                 function (){
                   alert('Failed to get server data, please try again.', 'CRITICAL');
