@@ -83,7 +83,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     ['$scope', '$q', 'JolokiaClient',
     function ($scope, $q, JolokiaClient) {
 
-      function alert(message, severity){
+      function alertBox(message, severity){
         $scope.alertMessage = message;
         switch(severity) {
             case 'CRITICAL':
@@ -120,7 +120,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
       }, 0);
 
       $scope.nodeDetails = {
-        desc: 'Please select a leaf node to view its details.'
+        desc: 'Select a node to see details about it.'
       };
 
       $scope.nodeSelected = function(e, data) {
@@ -132,7 +132,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             $scope.nodeDetails.desc = original.details.desc;
           } else {
             $scope.nodeDetails = {
-              desc: 'Please select a leaf node to view its details.'
+              desc: 'No details available, select another node.'
             };
           }
         });
@@ -142,7 +142,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         $scope.alertMessage = '';
 
         if (!$scope.hostname) {
-          alert('Please enter a hostname or ip address to connect to.', 'WARNING');
+          alertBox('Please enter a hostname or ip address to connect to.', 'WARNING');
         } else {
           $('#loadingProgress').modal();
 
@@ -184,12 +184,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                   });
                 },
                 function (){
-                  alert('Failed to get server data, please try again.', 'CRITICAL');
+                  alertBox('Failed to get server data, please try again.', 'CRITICAL');
                 }
               );
             },
             function () {
-              alert('Could not connect to "' + $scope.hostname + '".', 'CRITICAL');
+              alertBox('Could not connect to "' + $scope.hostname + '".', 'CRITICAL');
             }
           ).finally(function () {
             $('#loadingProgress').modal('hide');
