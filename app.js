@@ -22,58 +22,58 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   app.factory('JolokiaClient',
   	['$q',
     function ($q) {
-      var _client = {},
-          j4p;
+      var ASYNC_FUNCS = [
+        'getAttribute',
+        'list',
+        'search',
+        'setAttribute',
+        'version'
+      ];
+      var _client = {};
 
+      function asyncWrapper(fn){
 
-      _client.list = function(path) {
-        if (!j4p) throw "Server not set";
-        var _p = $q.defer();
-        j4p.list(
-          path,
-          {
-            success: function(response) {
-              _p.resolve(response);
-            },
-            error: function(response) {
-              _p.reject(response);
-            },
-            ajaxError: function(response) {
-              _p.reject(response);
-            }
+        return function(){
+          var args = [];
+          for (var i = 0; i < fn.length; i++){
+            args[i] = arguments[i] || null;
           }
-        );
-        return _p.promise;
-      };
+          var _p = $q.defer();
+          args[args.length-1] = args[args.length-1] || {};
+          args[args.length-1].success = function (response) {
+            _p.resolve(response);
+          };
+          args[args.length-1].error = function (response) {
+            _p.reject(response);
+          };
+          args[args.length-1].ajaxError = function (response) {
+            _p.reject(response);
+          };
+          fn.apply(this, args);
+          return _p.promise;
+        };
+      }
 
-
-      _client.getAttribute = function (mbean, attribute, path) {
-        return j4p.getAttribute(mbean, attribute, path);
-      };
-
-
-      _client.setServer = function(server){
+      function setServer(server){
         server = server || 'localhost';
 
+        // TODO more flexible url input
         var url = ['http://', server, ':', '8080', '/jolokia'].join('');
-        j4p = new Jolokia(url);
-        var _p = $q.defer();
-        j4p.version(
-          {
-            timeout: 3000,
-            success: function(response) {
-              _p.resolve(response);
-            },
-            error: function(response) {
-              _p.reject(response);
-            },
-            ajaxError: function(response) {
-              _p.reject(response);
-            }
+        var j4p = new Jolokia(url);
+
+        ASYNC_FUNCS.forEach(function (funcName){
+          j4p[funcName] = asyncWrapper(j4p[funcName]);
+        });
+
+        return j4p.version().then(
+          function () {
+            for(var key in j4p)
+              _client[key] = j4p[key];
           }
         );
-        return _p.promise;
-      };
+      }
+
+      _client.setServer = setServer;
 
       return _client;
     }]
@@ -128,7 +128,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         $scope.$apply(function() {
           var original = data.node.original;
           if (original.isLeaf) {
-            $scope.nodeDetails.attrs = JolokiaClient.getAttribute(original.parentName + ':' + original.text);
+            JolokiaClient.getAttribute(original.parentName + ':' + original.text).then(
+              function (response){
+                $scope.nodeDetails.attrs = response;
+              }
+            );
             $scope.nodeDetails.desc = original.details.desc;
           } else {
             $scope.nodeDetails = {
@@ -183,11 +187,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                     $scope.treeData = $scope.treeData.concat(listNode(key, response[key]));
                   });
                 },
+
                 function (){
                   alertBox('Failed to get server data, please try again.', 'CRITICAL');
                 }
               );
             },
+
             function () {
               alertBox('Could not connect to "' + $scope.hostname + '".', 'CRITICAL');
             }
