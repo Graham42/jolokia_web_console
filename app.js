@@ -1,7 +1,7 @@
 (function() {
   'use strict';
 
-  window.app = angular.module('jolokiaWebConsole', ['jsTree.directive']);
+  window.app = angular.module('jolokiaWebConsole', []);
 
   app.factory('JolokiaClient',
   	['$q',
@@ -97,11 +97,7 @@
       };
 
       $scope.treeData = [];
-
-      // directive doesn't pick up initial data without this
-      setTimeout( function(){
-        $scope.$apply();
-      }, 0);
+      $scope.jsTreeConfig = {};
 
       $scope.nodeDetails = {
         desc: 'Select a node to see details about it.'
@@ -124,6 +120,9 @@
             };
           }
         });
+      };
+      $scope.jsTreeEvents = {
+        'select_node.jstree': $scope.nodeSelected
       };
 
       $scope.setServer = function () {
@@ -170,6 +169,13 @@
                   Object.keys(response).forEach(function (key) {
                     $scope.treeData = $scope.treeData.concat(listNode(key, response[key]));
                   });
+                  $scope.jsTreeConfig = {
+                    'types': $scope.treeTypesConfig,
+                    'plugins': ['sort', 'types'],
+                    'core': {
+                      'data': $scope.treeData
+                    }
+                  };
                 },
 
                 function (){
@@ -188,4 +194,33 @@
       };
     }
     ]);
+
+  app.directive('jsTree',
+    [function () {
+      var _d = {
+        restrict: 'E',
+        scope: {
+          'config': '=',
+          'treeEvents': '='
+        },
+        _setEvents: function(s, e, a) {
+          if (a.treeEvents) {
+            for (var evt in s.treeEvents){
+              if (s.treeEvents.hasOwnProperty(evt)){
+                _d._tree.on(evt, s.treeEvents[evt]);
+              }
+            }
+          }
+        },
+        link: function (scope, element, attrs) {
+          scope.$watch('config', function() {
+            $(element).jstree('destroy');
+            _d._tree = $(element).jstree(scope.config);
+            _d._setEvents(scope, element, attrs);
+          }, true);
+        }
+      };
+      return _d;
+    }]
+  );
 }());
