@@ -18,4 +18,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #node-details {
   background-color: #f5f5f5;
   border: 1px solid #ccc;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+#nav-tree>ul {
+  overflow: auto;
+  max-height: 70%;
 }

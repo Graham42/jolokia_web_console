@@ -55,10 +55,10 @@
     <hr>
 
     <div class="row">
-      <div class="col-md-4">
-        <js-tree config="jsTreeConfig" tree-events="jsTreeEvents"></js-tree>
+      <div class="col-md-5">
+        <js-tree id="nav-tree" config="jsTreeConfig" tree-events="jsTreeEvents"></js-tree>
       </div>
-      <div class="col-md-8">
+      <div class="col-md-7">
         <div id="node-details" ng-hide="!treeData || treeData.length == 0">
           <h4 >{{nodeDetails.desc}}</h4>
           <hr>
