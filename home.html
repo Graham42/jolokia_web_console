@@ -59,23 +59,9 @@
         <js-tree id="nav-tree" config="jsTreeConfig" tree-events="jsTreeEvents"></js-tree>
       </div>
       <div class="col-md-7">
-        <div id="node-details" ng-hide="!treeData || treeData.length == 0">
-          <h4 >{{nodeDetails.desc}}</h4>
-          <hr>
-          <table ng-hide="!nodeDetails.attrs" class="table table-striped">
-            <thead>
-              <tr>
-                <th>Attribute Name</th>
-                <th>Description</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr ng-repeat="(name, _attr) in nodeDetails.attrs">
-                <td>{{name}}</td>
-                <td>{{_attr | json}}</td>
-              </tr>
-            </tbody>
-          </table>
+        <!-- TODO format better -->
+        <div ng-hide="!nodeDetails">
+          <pre>{{nodeDetails}}</pre>
         </div>
       </div>
     </div>

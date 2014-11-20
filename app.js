@@ -99,26 +99,32 @@
       $scope.treeData = [];
       $scope.jsTreeConfig = {};
 
-      $scope.nodeDetails = {
-        desc: 'Select a node to see details about it.'
-      };
+      $scope.nodeDetails = "";
 
       $scope.nodeSelected = function(e, data) {
+        var getrArgs = data.node.original.getrArgs;
         //http://jimhoskins.com/2012/12/17/angularjs-and-apply.html//
         $scope.$apply(function() {
-          var original = data.node.original;
-          if (original.isLeaf) {
-            JolokiaClient.getAttribute(original.parentName + ':' + original.text).then(
-              function (response){
-                $scope.nodeDetails.attrs = response;
+          $scope.nodeDetails = 'Loading details...';
+          JolokiaClient.getAttribute(getrArgs[0], getrArgs[1], getrArgs[2]).then(
+            function (response){
+              for(var key in response){
+                if(typeof response[key] === 'object' &&
+                    response[key] !== null &&
+                    !Array.isArray(response[key])){
+                  response[key] = "// Complex Object, view in tree //";
+                }
               }
-            );
-            $scope.nodeDetails.desc = original.details.desc;
-          } else {
-            $scope.nodeDetails = {
-              desc: 'No details available, select another node.'
-            };
-          }
+              $scope.nodeDetails = JSON.stringify(response, null, 2);
+            },
+            function (response) {
+              if (response.status >= 400 && response.status < 500){
+                $scope.nodeDetails = 'No details available, select another node.';
+              } else {
+                $scope.nodeDetails = 'Failed to load details.';
+              }
+            }
+          );
         });
       };
       $scope.jsTreeEvents = {
@@ -135,6 +141,9 @@
 
           JolokiaClient.setServer($scope.hostname).then(
             function () {
+              $scope.nodeDetails = {
+                desc: 'Select a node to see details about it.'
+              };
               $scope.jsTreeConfig = {
                 'types': $scope.treeTypesConfig,
                 'plugins': ['sort', 'types'],
@@ -149,7 +158,8 @@
                               text: item,
                               type: 'folder',
                               children: (typeof response[item] === 'object' && response[item] !== null),
-                              jpath: item
+                              lspath: item,
+                              getrArgs: [item]
                             };
                           });
                           cb(result);
@@ -158,20 +168,47 @@
                         $('#loadingProgress').modal('hide');
                       });
                     } else {
-                      // non-root
-                      JolokiaClient.list(node.original.jpath, { maxDepth: 2 }).then(
+                      // generic
+                      JolokiaClient.list(node.original.lspath, { maxDepth: 2 }).then(
                         function (response) {
                           var result = Object.keys(response).map(function (item) {
+                            if (['attr', 'op', 'desc'].indexOf(item) !== -1)
+                              return;
+
                             var isFolder = (typeof response[item] === 'object' &&
-                                              response[item] !== null &&
-                                              response[item].desc === undefined);
-                            return {
+                                              response[item] !== null);
+                            var newNode = {
                               text: item,
                               type: isFolder ? 'folder' : 'file',
                               children: isFolder,
-                              jpath: node.original.jpath + '/' + item
+                              lspath: node.original.lspath + '/' + item
                             };
+                            if (node.original.getrArgs[0].indexOf(':') === -1){
+                              newNode.getrArgs = [node.original.getrArgs[0] + ':' + item];
+                            } else {
+                              newNode.getrArgs = node.original.getrArgs.concat([item]);
+                            }
+                            return newNode;
                           });
+                          for(var i = 0; i < result.length;){
+                            if (result[i] === undefined)
+                              result.splice(i, 1);
+                            else
+                              i++;
+                          }
+
+                          if (response.attr){
+                            var attrNodes = Object.keys(response.attr).map(function (item) {
+                              return {
+                                text: item,
+                                type: 'file',
+                                children: false,
+                                getrArgs: node.original.getrArgs.concat([item])
+                              };
+                            });
+                            result = result.concat(attrNodes);
+                          }
+
                           cb(result);
                         }
                       );
