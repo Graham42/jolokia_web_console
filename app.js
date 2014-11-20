@@ -17,7 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 (function() {
   'use strict';
 
-  window.app = angular.module('jolokiaWebConsole', []);
+  window.app = angular.module('jolokiaWebConsole', ['angularBootstrapNavTree']);
 
   app.factory('JolokiaClient',
   	['$q',
@@ -100,46 +100,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         }
       }
 
-      $scope.treeTypesConfig = {
-        "default": {
-          "icon": "/images/file.png"
-        },
-        "folder": {
-          "icon": "/images/folder.png"
-        },
-        "file": {
-          "icon": "/images/file.png"
-        }
-      };
-
-      $scope.treeData = [];
-      $scope.jsTreeConfig = {};
-
-      $scope.nodeDetails = {
-        desc: 'Select a node to see details about it.'
-      };
-
-      $scope.nodeSelected = function(e, data) {
-        //http://jimhoskins.com/2012/12/17/angularjs-and-apply.html//
-        $scope.$apply(function() {
-          var original = data.node.original;
-          if (original.isLeaf) {
-            JolokiaClient.getAttribute(original.parentName + ':' + original.text).then(
-              function (response){
-                $scope.nodeDetails.attrs = response;
-              }
-            );
-            $scope.nodeDetails.desc = original.details.desc;
-          } else {
-            $scope.nodeDetails = {
-              desc: 'No details available, select another node.'
-            };
-          }
-        });
-      };
-      $scope.jsTreeEvents = {
-        'select_node.jstree': $scope.nodeSelected
-      };
+      $scope.navTreeData = [];
 
       $scope.setServer = function () {
         $scope.alertMessage = '';
@@ -154,44 +115,27 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
               return JolokiaClient.list('').then(
                 function (response){
 
-                  // process root tree
-                  var idCounter = 0;
-                  function listNode(name, node, parentId, parentName){
-                    parentId = parentId || '#';
-                    var resultList = [];
-                    //self
-                    var id = 'node' + idCounter++;
-                    var isLeaf = node.hasOwnProperty('desc');
-                    var localNode = {
-                      id: id,
-                      type: (isLeaf) ? 'file' : 'folder',
-                      parent: parentId,
-                      parentName: parentName,
-                      text: name,
-                      isLeaf: isLeaf
-                    };
-                    if (isLeaf) localNode.details = node;
-                    resultList.push(localNode);
-                    if (!isLeaf){
-                      //children
-                      Object.keys(node).forEach(function (key) {
-                        resultList = resultList.concat(listNode(key, node[key], id, name));
-                      });
-                    }
-                    return resultList;
+                  var z = 0;
+                  function listNode(nodes){
+                    if (z++ > 1500) return [];
+                    var results = [];
+                    Object.keys(nodes).forEach(function (key) {
+                      if (typeof nodes[key] === 'object' && nodes[key]){
+                        results.push({
+                          label: key,
+                          children: listNode(nodes[key])
+                        });
+                      } else {
+                        results.push(key);
+                      }
+
+                    });
+                    return results;
                   }
 
-                  $scope.treeData = [];
-                  Object.keys(response).forEach(function (key) {
-                    $scope.treeData = $scope.treeData.concat(listNode(key, response[key]));
-                  });
-                  $scope.jsTreeConfig = {
-                    'types': $scope.treeTypesConfig,
-                    'plugins': ['sort', 'types'],
-                    'core': {
-                      'data': $scope.treeData
-                    }
-                  };
+                  $scope.navTreeData = listNode(response);
+
+                  console.log($scope.navTreeData);
                 },
 
                 function (){
@@ -210,33 +154,4 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
       };
     }
     ]);
-
-  app.directive('jsTree',
-    [function () {
-      var _d = {
-        restrict: 'E',
-        scope: {
-          'config': '=',
-          'treeEvents': '='
-        },
-        _setEvents: function(s, e, a) {
-          if (a.treeEvents) {
-            for (var evt in s.treeEvents){
-              if (s.treeEvents.hasOwnProperty(evt)){
-                _d._tree.on(evt, s.treeEvents[evt]);
-              }
-            }
-          }
-        },
-        link: function (scope, element, attrs) {
-          scope.$watch('config', function() {
-            $(element).jstree('destroy');
-            _d._tree = $(element).jstree(scope.config);
-            _d._setEvents(scope, element, attrs);
-          }, true);
-        }
-      };
-      return _d;
-    }]
-  );
 }());

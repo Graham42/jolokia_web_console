@@ -20,18 +20,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   <title>Jolokia Web Console Beta</title>
 
   <link rel="stylesheet" type="text/css" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
-  <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/jstree/3.0.8/themes/default/style.min.css">
+
+  <link rel="stylesheet" type="text/css" href="libs/abn_tree.css">
 
   <link rel="stylesheet" type="text/css" href="app.css">
 
   <script type="text/javascript" src="//code.jquery.com/jquery-2.1.1.min.js"></script>
   <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/angularjs/1.3.2/angular.min.js"></script>
-  <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/angularjs/1.3.2/angular-route.min.js"></script>
-  <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jstree/3.0.8/jstree.min.js"></script>
   <script type="text/javascript" src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
 
-  <script type="text/javascript" src="/libs/jolokia-min.js"></script>
-  <script type="text/javascript" src="/libs/jolokia-simple-min.js"></script>
+  <script type="text/javascript" src="libs/jolokia-min.js"></script>
+  <script type="text/javascript" src="libs/jolokia-simple-min.js"></script>
+  <script type="text/javascript" src="libs/abn_tree_directive.js"></script>
 
   <script type="text/javascript" src="app.js"></script>
 </head>
@@ -72,26 +72,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
     <div class="row">
       <div class="col-md-5">
-        <js-tree id="nav-tree" config="jsTreeConfig" tree-events="jsTreeEvents"></js-tree>
+        <abn-tree tree-data="navTreeData"></abn-tree>
       </div>
+
       <div class="col-md-7">
-        <div id="node-details" ng-hide="!treeData || treeData.length == 0">
-          <h4 >{{nodeDetails.desc}}</h4>
-          <hr>
-          <table ng-hide="!nodeDetails.attrs" class="table table-striped">
-            <thead>
-              <tr>
-                <th>Attribute Name</th>
-                <th>Description</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr ng-repeat="(name, _attr) in nodeDetails.attrs">
-                <td>{{name}}</td>
-                <td>{{_attr | json}}</td>
-              </tr>
-            </tbody>
-          </table>
+        <div id="node-details" ng-hide="!navTreeData || navTreeData.length == 0">
+          <p>#TODO put data here</p>
         </div>
       </div>
     </div>
