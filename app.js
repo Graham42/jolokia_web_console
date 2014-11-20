@@ -135,61 +135,57 @@
 
           JolokiaClient.setServer($scope.hostname).then(
             function () {
-              return JolokiaClient.list('').then(
-                function (response){
-
-                  // process root tree
-                  var idCounter = 0;
-                  function listNode(name, node, parentId, parentName){
-                    parentId = parentId || '#';
-                    var resultList = [];
-                    //self
-                    var id = 'node' + idCounter++;
-                    var isLeaf = node.hasOwnProperty('desc');
-                    var localNode = {
-                      id: id,
-                      type: (isLeaf) ? 'file' : 'folder',
-                      parent: parentId,
-                      parentName: parentName,
-                      text: name,
-                      isLeaf: isLeaf
-                    };
-                    if (isLeaf) localNode.details = node;
-                    resultList.push(localNode);
-                    if (!isLeaf){
-                      //children
-                      Object.keys(node).forEach(function (key) {
-                        resultList = resultList.concat(listNode(key, node[key], id, name));
+              $scope.jsTreeConfig = {
+                'types': $scope.treeTypesConfig,
+                'plugins': ['sort', 'types'],
+                'core': {
+                  'data': function (node, cb) {
+                    if(node.id === "#") {
+                      // root
+                      JolokiaClient.list('', { maxDepth: 2 }).then(
+                        function (response) {
+                          var result = Object.keys(response).map(function (item) {
+                            return {
+                              text: item,
+                              type: 'folder',
+                              children: (typeof response[item] === 'object' && response[item] !== null),
+                              jpath: item
+                            };
+                          });
+                          cb(result);
+                        }
+                      ).finally(function () {
+                        $('#loadingProgress').modal('hide');
                       });
+                    } else {
+                      // non-root
+                      JolokiaClient.list(node.original.jpath, { maxDepth: 2 }).then(
+                        function (response) {
+                          var result = Object.keys(response).map(function (item) {
+                            var isFolder = (typeof response[item] === 'object' &&
+                                              response[item] !== null &&
+                                              response[item].desc === undefined);
+                            return {
+                              text: item,
+                              type: isFolder ? 'folder' : 'file',
+                              children: isFolder,
+                              jpath: node.original.jpath + '/' + item
+                            };
+                          });
+                          cb(result);
+                        }
+                      );
                     }
-                    return resultList;
                   }
-
-                  $scope.treeData = [];
-                  Object.keys(response).forEach(function (key) {
-                    $scope.treeData = $scope.treeData.concat(listNode(key, response[key]));
-                  });
-                  $scope.jsTreeConfig = {
-                    'types': $scope.treeTypesConfig,
-                    'plugins': ['sort', 'types'],
-                    'core': {
-                      'data': $scope.treeData
-                    }
-                  };
-                },
-
-                function (){
-                  alertBox('Failed to get server data, please try again.', 'CRITICAL');
                 }
-              );
+              };
             },
 
             function () {
               alertBox('Could not connect to "' + $scope.hostname + '".', 'CRITICAL');
+              $('#loadingProgress').modal('hide');
             }
-          ).finally(function () {
-            $('#loadingProgress').modal('hide');
-          });
+          );
         }
       };
     }
