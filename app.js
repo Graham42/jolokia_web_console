@@ -14,6 +14,7 @@
         'version'
       ];
       var _client = {};
+      var auth;
 
       function asyncWrapper(fn){
 
@@ -23,23 +24,36 @@
             args[i] = arguments[i] || null;
           }
           var _p = $q.defer();
-          args[args.length-1] = args[args.length-1] || {};
-          args[args.length-1].success = function (response) {
+          var opts;
+          if (fn.name === 'execute' || !args[args.length-1])
+            opts = {};
+          else
+            opts = args[args.length-1];
+          opts.success = function (response) {
             _p.resolve(response);
           };
-          args[args.length-1].error = function (response) {
+          opts.error = function (response) {
             _p.reject(response);
           };
-          args[args.length-1].ajaxError = function (response) {
+          opts.ajaxError = function (response) {
             _p.reject(response);
           };
+          if (auth){
+            opts.username = auth.user;
+            opts.password = auth.pwd;
+          }
+          if (fn.name === 'execute')
+            args[args.length] = opts;
+          else
+            args[args.length-1] = opts;
           fn.apply(this, args);
           return _p.promise;
         };
       }
 
-      function setServer(server){
+      function setServer(server, user, pwd){
         server = server || 'localhost';
+        auth = (user && pwd) ? {user: user, pwd: pwd} : null;
 
         // TODO more flexible url input
         var url = ['http://', server, ':', '8080', '/jolokia'].join('');
@@ -139,11 +153,9 @@
         } else {
           $('#loadingProgress').modal();
 
-          JolokiaClient.setServer($scope.hostname).then(
+          JolokiaClient.setServer($scope.hostname, $scope.username, $scope.password).then(
             function () {
-              $scope.nodeDetails = {
-                desc: 'Select a node to see details about it.'
-              };
+              $scope.nodeDetails = 'Select a node to see details about it.';
               $scope.jsTreeConfig = {
                 'types': $scope.treeTypesConfig,
                 'plugins': ['sort', 'types'],
