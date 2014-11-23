@@ -41,6 +41,8 @@
           if (auth){
             opts.username = auth.user;
             opts.password = auth.pwd;
+            opts.method = 'GET';
+            opts.jsonp = true;
           }
           if (fn.name === 'execute')
             args[args.length] = opts;
